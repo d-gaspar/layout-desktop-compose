@@ -1,0 +1,1 @@
+C:\Users\Daniel\IdeaProjects\layout-desktop-compose\build\classes\kotlin\main\DesktopComposeXML.class;C:\Users\Daniel\IdeaProjects\layout-desktop-compose\build\classes\kotlin\main\MainKt$main$1.class;C:\Users\Daniel\IdeaProjects\layout-desktop-compose\build\classes\kotlin\main\MainKt.class
