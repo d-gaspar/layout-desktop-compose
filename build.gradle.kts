@@ -21,7 +21,8 @@ dependencies {
     implementation(compose.desktop.currentOs)
 
     // jackson - xml
-    implementation("com.fasterxml.jackson.dataformat", "jackson-dataformat-xml", "2.9.4")
+    //implementation("com.fasterxml.jackson.dataformat", "jackson-dataformat-xml", "2.11.0")
+    //implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
 }
 
 tasks.withType<KotlinCompile>() {

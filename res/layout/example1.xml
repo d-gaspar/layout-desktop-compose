@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<box>
-
-</box>
+<window>
+    <text>Hello World!</text>
+    <row>
+        <text>item 1</text>
+        <text>item 2</text>
+    </row>
+    <text>End of file</text>
+</window>

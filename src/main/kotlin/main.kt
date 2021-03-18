@@ -1,8 +1,8 @@
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
-//import androidx.compose.foundation.layout.Column
-//import androidx.compose.foundation.layout.fillMaxSize
-//import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
 import androidx.compose.material.Button
@@ -15,9 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
-
 fun main() {
-    Window (
+    var layoutManager = DesktopComposeLayout()
+    layoutManager.readLayout("example1.xml")
+
+    /*Window (
         title = "layout-desktop-compose"
     ){
         Column (
@@ -28,5 +30,5 @@ fun main() {
         ){
             Text("Hello World!")
         }
-    }
+    }*/
 }
