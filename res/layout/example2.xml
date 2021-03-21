@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<box>
+    <column align="center">
+        <text>BBBBBBBBB6</text>
+    </column>
+    <text>BBBBBBBBB1</text>
+    <row>
+        <text>BBBBBBBBB2</text>
+        <button>CCCCCCCCCCCCCCCCC</button>
+    </row>
+    <row>
+        <text>item 1</text>
+        <text>item 2</text>
+    </row>
+    <text>End of file</text>
+</box>

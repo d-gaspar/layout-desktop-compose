@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<window>
-    <text>Hello World!</text>
-    <row>
-        <text>item 1</text>
-        <text>item 2</text>
+<column fillMaxSize="1">
+
+    <!-- HEADER -->
+    <column background="#272727" padding="10,50,10,10">
+        <row fillMaxWidth="1">
+            <row fillMaxWidth="1">
+                <text color="#d9d9d9" fontSize="35" fontWeight="700">Server</text>
+                <box clip="circle" size="20" background="#cb181d"></box>
+            </row>
+        </row>
+        <row>
+            <text color="#d9d9d9">IP: 192.168.0.1</text>
+        </row>
+    </column>
+
+    <!-- CONTENT -->
+    <row fillMaxWidth="1">
+
+        <!-- LEFT -->
+        <column fillMaxHeight="1" padding="10,5, 78" background="#353535">
+            <button color="#d9d9d9" size="150,50">BUTTON 1</button>
+            <button color="#d9d9d9" size="150,50">BUTTON 2</button>
+        </column>
+
+        <!-- RIGHT -->
+        <column fillMaxSize="1" padding="10" background="#000000">
+            <text color="#FFFFFF">CONTENT</text>
+        </column>
     </row>
-    <text>End of file</text>
-</window>
+</column>
