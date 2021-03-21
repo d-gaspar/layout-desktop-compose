@@ -12,7 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,10 +23,12 @@ import androidx.compose.ui.unit.*
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 import java.io.File
+import java.util.regex.Pattern
 import javax.xml.parsers.DocumentBuilderFactory
 
 class DesktopComposeLayout {
     var layoutDir : String = ""
+    //var layoutIds = HashMap<String, MutableState<String>>()
 
     constructor(layoutDir : String = "res/layout/") {
         this.layoutDir = layoutDir
@@ -46,66 +49,77 @@ class DesktopComposeLayout {
 
     @Composable
     private fun checkXMLChilds(node: Node) {
-        val childsNodes = node.childNodes
+        val childNodes = node.childNodes
 
-        for (i in 0 until childsNodes.length) {
-            when (childsNodes.item(i).nodeName) {
+        for (i in 0 until childNodes.length) {
+            when (childNodes.item(i).nodeName) {
                 "box"       -> {
-                    val (modifier, otherAttributes) = getModifier(childsNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Box (
                         modifier = modifier
                     ){
-                        checkXMLChilds(childsNodes.item(i))
+                        checkXMLChilds(childNodes.item(i))
                     }
                 }
                 "column"    -> {
-                    val (modifier, otherAttributes) = getModifier(childsNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Column (
                         modifier = modifier//,
                         //horizontalAlignment = Alignment.CenterHorizontally
                     ){
-                        checkXMLChilds(childsNodes.item(i))
+                        checkXMLChilds(childNodes.item(i))
                     }
                 }
                 "row"       -> {
-                    val (modifier, otherAttributes) = getModifier(childsNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Row (
                         modifier = modifier,
                         verticalAlignment = if ("verticalAlignment" in otherAttributes.keys) {
                             when (otherAttributes["color"]) {
                                 "top" -> Alignment.Top
-                                "bottom" -> {
-                                    Alignment.Bottom
-                                }
+                                "bottom" -> Alignment.Bottom
                                 "centerVertically" -> Alignment.CenterVertically
                                 else -> Alignment.Top
                             }
                         } else Alignment.Top
                     ){
-                        checkXMLChilds(childsNodes.item(i))
+                        checkXMLChilds(childNodes.item(i))
                     }
                 }
                 "text"      -> {
-                    val (modifier, otherAttributes) = getModifier(childsNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+
+                    // text id
+                    var text = childNodes.item(i).textContent
+                    /*.replace(
+                        Regex(Pattern.quote("\$ip"))) {
+                            println("LLLLLLLLLLLLLL")
+                            layoutIds[it.value.substring(1)] = mutableStateOf("")
+                            ""
+                        }*/
+                    /*if ("ip" !in layoutIds.keys) {
+                        layoutIds["ip"] = mutableStateOf("ZZZ")
+                        text = "text ${layoutIds["ip"]!!.value}"
+                    }*/
 
                     Text(
-                        childsNodes.item(i).textContent,
+                        text,
                         color = if ("color" in otherAttributes.keys && otherAttributes["color"]!!.isNotEmpty()) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
                         fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
                         fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
                     )
                 }
                 "button"    -> {
-                    val (modifier, otherAttributes) = getModifier(childsNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Button(
                         onClick = {},
                         modifier = modifier
                     ){
-                        Text(childsNodes.item(i).textContent)
+                        Text(childNodes.item(i).textContent)
                     }
 
                     // add margin

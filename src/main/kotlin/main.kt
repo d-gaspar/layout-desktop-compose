@@ -1,3 +1,11 @@
+
+/**
+ * author: Daniel Gaspar Goncalves
+ * github: https://github.com/d-gaspar/layout-desktop-compose
+ * APACHE LICENSE 2.0
+ *
+ * */
+
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -18,12 +26,8 @@ fun main() {
     Window (
         title = "layout-desktop-compose"
     ){
-        /*Row (
-            modifier = Modifier.fillMaxSize().background(Color.Blue)
-        ){
-            Text("OOOOOOOOOOOOO")
-            //Text("teste")
-        }*/
         layoutManager.getLayout("example1.xml")
+
+        //layoutManager.layoutIds["ip"]?.value = "AAAAA"
     }
 }
