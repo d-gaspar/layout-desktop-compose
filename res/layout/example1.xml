@@ -6,11 +6,11 @@
         <row fillMaxWidth="1">
             <row fillMaxWidth="1">
                 <text color="#d9d9d9" fontSize="35" fontWeight="700">Server</text>
-                <box clip="circle" size="20" background="#cb181d"></box>
+                <box clip="circle" size="20" background="$connectionCircle:#cb181d"/>
             </row>
         </row>
         <row>
-            <text color="#d9d9d9">IP: ip</text>
+            <text color="#d9d9d9">IP: $ip</text>
         </row>
     </column>
 
@@ -19,7 +19,7 @@
 
         <!-- LEFT -->
         <column fillMaxHeight="1" padding="10,5, 78" background="#353535">
-            <button color="#d9d9d9" size="150,50">BUTTON 1</button>
+            <button onClick="$button1" color="#d9d9d9" size="150,50">BUTTON 1</button>
             <button color="#d9d9d9" size="150,50">BUTTON 2</button>
         </column>
 

@@ -22,20 +22,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
+import java.io.EOFException
 import java.io.File
+import java.io.IOException
 import java.util.regex.Pattern
 import javax.xml.parsers.DocumentBuilderFactory
 
 class DesktopComposeLayout {
     var layoutDir : String = ""
-    //var layoutIds = HashMap<String, MutableState<String>>()
+    var onVariableChange : (() -> Unit)? = null
+    var ID = HashMap<String, MutableState<String>>()
 
     constructor(layoutDir : String = "res/layout/") {
         this.layoutDir = layoutDir
     }
 
+    private fun setID(id : String, newValue : String) {
+        if (id !in ID.keys) {
+            ID[id] = mutableStateOf(newValue)
+        } else {
+            ID[id]!!.value = newValue
+
+            onVariableChange?.invoke()
+        }
+    }
+
     @Composable
-    fun getLayout(fileName : String) { // xml file
+    fun getLayout(fileName : String, onVariableChange : (() -> Unit)? = null) { // xml file
+        this.onVariableChange = onVariableChange
+
         val xmlFile : File = File(layoutDir + fileName)
 
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlFile)
@@ -50,6 +65,9 @@ class DesktopComposeLayout {
     @Composable
     private fun checkXMLChilds(node: Node) {
         val childNodes = node.childNodes
+
+        // empty node
+        if (childNodes.length == 0) return
 
         for (i in 0 until childNodes.length) {
             when (childNodes.item(i).nodeName) {
@@ -93,17 +111,14 @@ class DesktopComposeLayout {
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     // text id
-                    var text = childNodes.item(i).textContent
-                    /*.replace(
-                        Regex(Pattern.quote("\$ip"))) {
-                            println("LLLLLLLLLLLLLL")
-                            layoutIds[it.value.substring(1)] = mutableStateOf("")
-                            ""
-                        }*/
-                    /*if ("ip" !in layoutIds.keys) {
-                        layoutIds["ip"] = mutableStateOf("ZZZ")
-                        text = "text ${layoutIds["ip"]!!.value}"
-                    }*/
+                    var text = childNodes.item(i).textContent.replace(
+                        Regex("""\$([a-zA-Z0-9]*)""")
+                    ){
+                        if (it.groupValues[1] !in ID.keys) {
+                            ID[it.groupValues[1]] = mutableStateOf("")
+                        }
+                        ""+ID[it.groupValues[1]]?.value
+                    }
 
                     Text(
                         text,
@@ -115,9 +130,18 @@ class DesktopComposeLayout {
                 "button"    -> {
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
+                    // set id
+                    if ("onClick" in otherAttributes.keys && otherAttributes["onClick"]!!.isNotEmpty()){
+                        setID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off")
+                    }
+
                     Button(
-                        onClick = {},
-                        modifier = modifier
+                        onClick = {
+                            if ("onClick" in otherAttributes.keys){
+                                setID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "on")
+                            }
+                        },
+                        //modifier = modifier
                     ){
                         Text(childNodes.item(i).textContent)
                     }
@@ -169,7 +193,25 @@ class DesktopComposeLayout {
                     "background" -> {
                         var value = attributes.item(i).nodeValue
 
-                        modifier = modifier.background(getColorByHex(value))
+                        //modifier = modifier.background(getColorByHex(value))
+
+                        println(value.toString().replace(
+                            Regex("""\$?([a-zA-Z0-9]*):?(#[a-zA-Z0-9]*)?""")
+                        ){
+                            if (it.groupValues.size == 3) {
+                                // id
+                                if (it.groupValues[1].isNotEmpty()) {
+                                    setID(it.groupValues[1], "#000000")
+                                }
+
+                                // add modifier
+                                if (it.groupValues[2].isNotEmpty()) {
+                                    modifier = modifier.background(getColorByHex(it.groupValues[2]))
+                                }
+                            }
+                            ""+it.groupValues
+                        })
+
                     }
                     "clip" -> {
                         when (attributes.item(i).nodeValue) {
@@ -237,6 +279,7 @@ class DesktopComposeLayout {
                         }
                     }
                     else -> {
+
                         otherAttributes[attributes.item(i).nodeName] = attributes.item(i).nodeValue
                     }
                 }

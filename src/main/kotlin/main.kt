@@ -21,13 +21,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 fun main() {
-    var layoutManager = DesktopComposeLayout()
+    var mainLayout = DesktopComposeLayout()
 
     Window (
         title = "layout-desktop-compose"
     ){
-        layoutManager.getLayout("example1.xml")
+        mainLayout.getLayout("example1.xml", onVariableChange = {
+            if(mainLayout.ID["button1"]?.value == "on") {
+                mainLayout.ID["ip"]?.value = "127.0.0.1"
 
-        //layoutManager.layoutIds["ip"]?.value = "AAAAA"
+                mainLayout.ID["button1"]?.value = "off"
+            }
+        })
     }
 }
