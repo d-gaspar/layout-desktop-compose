@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 fun main() {
     var mainLayout = DesktopComposeLayout()
@@ -31,6 +32,9 @@ fun main() {
                 mainLayout.ID["ip"]?.value = "127.0.0.1"
 
                 mainLayout.ID["button1"]?.value = "off"
+
+                mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
+                mainLayout.ID["AAA"]?.value = "red"
             }
         })
     }

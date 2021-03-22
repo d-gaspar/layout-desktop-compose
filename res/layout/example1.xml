@@ -6,7 +6,7 @@
         <row fillMaxWidth="1">
             <row fillMaxWidth="1">
                 <text color="#d9d9d9" fontSize="35" fontWeight="700">Server</text>
-                <box clip="circle" size="20" background="$connectionCircle:#cb181d"/>
+                <box clip="circle" size="20" background="$connectionCircle=#cb181d"/>
             </row>
         </row>
         <row>

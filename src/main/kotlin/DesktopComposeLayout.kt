@@ -13,6 +13,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +38,12 @@ class DesktopComposeLayout {
         this.layoutDir = layoutDir
     }
 
+    /*********************************************************************************************************/
+
     private fun setID(id : String, newValue : String) {
+        // empty id
+        if (id.isEmpty()) return
+
         if (id !in ID.keys) {
             ID[id] = mutableStateOf(newValue)
         } else {
@@ -46,6 +52,8 @@ class DesktopComposeLayout {
             onVariableChange?.invoke()
         }
     }
+
+    /*********************************************************************************************************/
 
     @Composable
     fun getLayout(fileName : String, onVariableChange : (() -> Unit)? = null) { // xml file
@@ -62,6 +70,8 @@ class DesktopComposeLayout {
         checkXMLChilds(doc)
     }
 
+    /*********************************************************************************************************/
+
     @Composable
     private fun checkXMLChilds(node: Node) {
         val childNodes = node.childNodes
@@ -72,16 +82,21 @@ class DesktopComposeLayout {
         for (i in 0 until childNodes.length) {
             when (childNodes.item(i).nodeName) {
                 "box"       -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
 
-                    Box (
-                        modifier = modifier
-                    ){
-                        checkXMLChilds(childNodes.item(i))
+                    if("AAA" !in ID){
+                        ID["AAA"] = mutableStateOf("blue")
                     }
+
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(if (ID["AAA"]?.value == "blue") Color.Blue else Color.Red)
+                    )
                 }
                 "column"    -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
 
                     Column (
                         modifier = modifier//,
@@ -91,7 +106,7 @@ class DesktopComposeLayout {
                     }
                 }
                 "row"       -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
 
                     Row (
                         modifier = modifier,
@@ -108,10 +123,10 @@ class DesktopComposeLayout {
                     }
                 }
                 "text"      -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
 
                     // text id
-                    var text = childNodes.item(i).textContent.replace(
+                    val text = childNodes.item(i).textContent.replace(
                         Regex("""\$([a-zA-Z0-9]*)""")
                     ){
                         if (it.groupValues[1] !in ID.keys) {
@@ -122,13 +137,13 @@ class DesktopComposeLayout {
 
                     Text(
                         text,
-                        color = if ("color" in otherAttributes.keys && otherAttributes["color"]!!.isNotEmpty()) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
+                        color = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
                         fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
                         fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
                     )
                 }
                 "button"    -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
 
                     // set id
                     if ("onClick" in otherAttributes.keys && otherAttributes["onClick"]!!.isNotEmpty()){
@@ -155,9 +170,12 @@ class DesktopComposeLayout {
         return
     }
 
-    private fun getModifier(attributes: NamedNodeMap) : Pair<Modifier, HashMap<String, String>> {
+    /*********************************************************************************************************/
+
+    private fun getModifier(attributes: NamedNodeMap) : Triple<Modifier, HashMap<String, String>, HashMap<String, String>> {
         var modifier = Modifier.defaultMinSizeConstraints()
         var otherAttributes = HashMap<String, String>()
+        var attributeIDs = HashMap<String, String>()
 
         if (attributes.length > 0) {
             /** ATTRIBUTE SEQUENCE
@@ -191,27 +209,26 @@ class DesktopComposeLayout {
             for (i in attributeOrder) {
                 when (attributes.item(i).nodeName) {
                     "background" -> {
-                        var value = attributes.item(i).nodeValue
-
-                        //modifier = modifier.background(getColorByHex(value))
-
-                        println(value.toString().replace(
-                            Regex("""\$?([a-zA-Z0-9]*):?(#[a-zA-Z0-9]*)?""")
+                        var value = getColorByHex(attributes.item(i).nodeValue.toString().replace(
+                            Regex("""\$?([a-zA-Z0-9]*)=?(#[a-zA-Z0-9]*)?""")
                         ){
                             if (it.groupValues.size == 3) {
                                 // id
-                                if (it.groupValues[1].isNotEmpty()) {
-                                    setID(it.groupValues[1], "#000000")
-                                }
+                                setID(it.groupValues[1], it.groupValues[2])
+                                attributeIDs["background"] = it.groupValues[1]
 
-                                // add modifier
-                                if (it.groupValues[2].isNotEmpty()) {
-                                    modifier = modifier.background(getColorByHex(it.groupValues[2]))
-                                }
+                                        // add modifier
+                                it.groupValues[2]
+
+                            } else {
+                                // Color.Unspecified
+                                ""
                             }
-                            ""+it.groupValues
                         })
 
+                        modifier = modifier.background(value)
+
+                        //modifier = modifier.background(getColorByHex(value))
                     }
                     "clip" -> {
                         when (attributes.item(i).nodeValue) {
@@ -286,10 +303,16 @@ class DesktopComposeLayout {
             }
         }
 
-        return Pair(modifier, otherAttributes)
+        return Triple(modifier, otherAttributes, attributeIDs)
     }
 
+    /*********************************************************************************************************/
+
     private fun getColorByHex(value : String) : Color {
+        // empty value
+        if (value.isEmpty()) return Color.Unspecified
+
+        // create auxiliary variable
         var valueAux = value
 
         // remove "#" on the beginning
