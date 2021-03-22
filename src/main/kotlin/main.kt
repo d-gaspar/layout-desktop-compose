@@ -28,13 +28,30 @@ fun main() {
         title = "layout-desktop-compose"
     ){
         mainLayout.getLayout("example1.xml", onVariableChange = {
-            if(mainLayout.ID["button1"]?.value == "on") {
+            // list all ids
+            mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
+
+            // button 1
+            if (mainLayout.ID["button1"]?.value == "on") {
                 mainLayout.ID["ip"]?.value = "127.0.0.1"
 
-                mainLayout.ID["button1"]?.value = "off"
+                if (mainLayout.ID["btnText1"]?.value == "CONNECT") {
+                    mainLayout.ID["connectionCircle"]?.value = "#32FF32"
+                    mainLayout.ID["btnText1"]?.value = "DISCONNECT"
+                } else {
+                    mainLayout.ID["connectionCircle"]?.value = "#FF3232"
+                    mainLayout.ID["btnText1"]?.value = "CONNECT"
+                }
+            }
 
-                mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
-                mainLayout.ID["AAA"]?.value = "red"
+            // button 2
+            if (mainLayout.ID["button2"]?.value == "on") {
+                mainLayout.ID["btnText2"]?.value += "A"
+            }
+
+            // button 3
+            if (mainLayout.ID["button3"]?.value == "on") {
+                mainLayout.ID["btnText3"]?.value += "B"
             }
         })
     }

@@ -6,7 +6,7 @@
         <row fillMaxWidth="1">
             <row fillMaxWidth="1">
                 <text color="#d9d9d9" fontSize="35" fontWeight="700">Server</text>
-                <box clip="circle" size="20" background="$connectionCircle=#cb181d"/>
+                <box clip="circle" size="20" background="$connectionCircle=#FF3232"/>
             </row>
         </row>
         <row>
@@ -19,8 +19,9 @@
 
         <!-- LEFT -->
         <column fillMaxHeight="1" padding="10,5, 78" background="#353535">
-            <button onClick="$button1" color="#d9d9d9" size="150,50">BUTTON 1</button>
-            <button color="#d9d9d9" size="150,50">BUTTON 2</button>
+            <button onClick="$button1" color="#d9d9d9" size="150,50">$btnText1=CONNECT</button>
+            <button onClick="$button2" color="#d9d9d9" size="150,50">$btnText2</button>
+            <button onClick="$button3" color="#d9d9d9" size="150,50">$btnText3</button>
         </column>
 
         <!-- RIGHT -->

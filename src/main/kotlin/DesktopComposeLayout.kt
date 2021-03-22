@@ -40,16 +40,25 @@ class DesktopComposeLayout {
 
     /*********************************************************************************************************/
 
-    private fun setID(id : String, newValue : String) {
+    private fun addID(id : String, newValue : String) {
         // empty id
         if (id.isEmpty()) return
 
         if (id !in ID.keys) {
             ID[id] = mutableStateOf(newValue)
-        } else {
-            ID[id]!!.value = newValue
+        }
+    }
+
+    private fun buttonOnClick(id : String) {
+        // empty id
+        if (id.isEmpty()) return
+
+        if (id in ID.keys) {
+            ID[id]!!.value = "on"
 
             onVariableChange?.invoke()
+
+            ID[id]!!.value = "off"
         }
     }
 
@@ -82,21 +91,14 @@ class DesktopComposeLayout {
         for (i in 0 until childNodes.length) {
             when (childNodes.item(i).nodeName) {
                 "box"       -> {
-                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
-
-                    if("AAA" !in ID){
-                        ID["AAA"] = mutableStateOf("blue")
-                    }
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(if (ID["AAA"]?.value == "blue") Color.Blue else Color.Red)
+                        modifier = modifier
                     )
                 }
                 "column"    -> {
-                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Column (
                         modifier = modifier//,
@@ -106,7 +108,7 @@ class DesktopComposeLayout {
                     }
                 }
                 "row"       -> {
-                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Row (
                         modifier = modifier,
@@ -123,15 +125,13 @@ class DesktopComposeLayout {
                     }
                 }
                 "text"      -> {
-                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     // text id
                     val text = childNodes.item(i).textContent.replace(
-                        Regex("""\$([a-zA-Z0-9]*)""")
+                        regexText()
                     ){
-                        if (it.groupValues[1] !in ID.keys) {
-                            ID[it.groupValues[1]] = mutableStateOf("")
-                        }
+                        addID(it.groupValues[1], "")
                         ""+ID[it.groupValues[1]]?.value
                     }
 
@@ -143,22 +143,58 @@ class DesktopComposeLayout {
                     )
                 }
                 "button"    -> {
-                    val (modifier, otherAttributes, attributeIDs) = getModifier(childNodes.item(i).attributes)
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
-                    // set id
-                    if ("onClick" in otherAttributes.keys && otherAttributes["onClick"]!!.isNotEmpty()){
-                        setID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off")
+                    // add id
+                    if ("onClick" in otherAttributes.keys){
+                        addID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off")
                     }
+
+                    // text id
+                    val text = childNodes.item(i).textContent.replace(
+                        regexText()
+                    ){
+                        // id
+                        addID(it.groupValues[1], it.groupValues[2])
+
+                        // default text
+                        if (it.groupValues[1].isNotEmpty()) {
+                            ""+ID[it.groupValues[1]]?.value
+                        } else {
+                            it.groupValues[2]
+                        }
+                    }
+                    /*val text = childNodes.item(i).textContent.replace(
+                        regexAttribute()
+                    ){
+                        //addID(it.groupValues[1], "")
+                        //""+ID[it.groupValues[1]]?.value
+
+                        // id
+                        addID(it.groupValues[1], it.groupValues[2])
+
+                        // default text
+                        if (it.groupValues[1].isNotEmpty()) {
+                            ""+ID[it.groupValues[1]]?.value
+                        } else {
+                            it.groupValues[2]
+                        }
+                    }*/
 
                     Button(
                         onClick = {
                             if ("onClick" in otherAttributes.keys){
-                                setID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "on")
+                                buttonOnClick(otherAttributes["onClick"]!!.toString().replace("\$", ""))
                             }
                         },
-                        //modifier = modifier
+                        modifier = modifier
                     ){
-                        Text(childNodes.item(i).textContent)
+                        Text(
+                            text,
+                            color = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
+                            fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
+                            fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
+                        )
                     }
 
                     // add margin
@@ -172,10 +208,9 @@ class DesktopComposeLayout {
 
     /*********************************************************************************************************/
 
-    private fun getModifier(attributes: NamedNodeMap) : Triple<Modifier, HashMap<String, String>, HashMap<String, String>> {
+    private fun getModifier(attributes: NamedNodeMap) : Pair<Modifier, HashMap<String, String>> {
         var modifier = Modifier.defaultMinSizeConstraints()
         var otherAttributes = HashMap<String, String>()
-        var attributeIDs = HashMap<String, String>()
 
         if (attributes.length > 0) {
             /** ATTRIBUTE SEQUENCE
@@ -210,25 +245,27 @@ class DesktopComposeLayout {
                 when (attributes.item(i).nodeName) {
                     "background" -> {
                         var value = getColorByHex(attributes.item(i).nodeValue.toString().replace(
-                            Regex("""\$?([a-zA-Z0-9]*)=?(#[a-zA-Z0-9]*)?""")
+                            regexAttribute()
                         ){
-                            if (it.groupValues.size == 3) {
+                            // groupValues => [1] $id; [2] hex_color
+                            if (it.groupValues.size == 3) { // maybe not necessary
                                 // id
-                                setID(it.groupValues[1], it.groupValues[2])
-                                attributeIDs["background"] = it.groupValues[1]
+                                addID(it.groupValues[1], it.groupValues[2])
 
-                                        // add modifier
-                                it.groupValues[2]
-
+                                // add modifier
+                                if (it.groupValues[1].isNotEmpty()) {
+                                    ""+ID[it.groupValues[1]]?.value
+                                } else {
+                                    it.groupValues[2]
+                                }
                             } else {
+                                println("ERROR")
                                 // Color.Unspecified
                                 ""
                             }
                         })
 
                         modifier = modifier.background(value)
-
-                        //modifier = modifier.background(getColorByHex(value))
                     }
                     "clip" -> {
                         when (attributes.item(i).nodeValue) {
@@ -303,7 +340,19 @@ class DesktopComposeLayout {
             }
         }
 
-        return Triple(modifier, otherAttributes, attributeIDs)
+        return Pair(modifier, otherAttributes)
+    }
+
+    /*********************************************************************************************************/
+
+    // attribute="$id:#default"
+    private fun regexAttribute(): Regex {
+        return Regex("""\$([a-zA-Z0-9]*)=?(#[a-zA-Z0-9]*)""")
+    }
+
+    // $id
+    private fun regexText(): Regex {
+        return Regex("""\$([a-zA-Z0-9]*)=?([a-zA-Z0-9]*)""")
     }
 
     /*********************************************************************************************************/
