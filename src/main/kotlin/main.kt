@@ -29,7 +29,7 @@ fun main() {
     ){
         mainLayout.getLayout("example1.xml", onVariableChange = {
             // list all ids
-            mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
+            //mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
 
             // button 1
             if (mainLayout.ID["button1"]?.value == "on") {
@@ -46,12 +46,17 @@ fun main() {
 
             // button 2
             if (mainLayout.ID["button2"]?.value == "on") {
+
                 mainLayout.ID["btnText2"]?.value += "A"
+
+                mainLayout.ID["contentBlock"]?.value = "example2.xml"
             }
 
             // button 3
             if (mainLayout.ID["button3"]?.value == "on") {
                 mainLayout.ID["btnText3"]?.value += "B"
+
+                mainLayout.ID["contentBlock"]?.value = ""
             }
         })
     }

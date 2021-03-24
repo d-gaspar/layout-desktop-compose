@@ -3,13 +3,13 @@
 
     <!-- HEADER -->
     <column background="#272727" padding="10,50,10,10">
-        <row fillMaxWidth="1">
-            <row fillMaxWidth="1">
+        <row fillMaxWidth="1" verticalAlignment="bottom">
+            <row fillMaxWidth="1" verticalAlignment="center">
                 <text color="#d9d9d9" fontSize="35" fontWeight="700">Server</text>
                 <box clip="circle" size="20" background="$connectionCircle=#FF3232"/>
             </row>
         </row>
-        <row>
+        <row verticalAlignment="center">
             <text color="#d9d9d9">IP: $ip</text>
         </row>
     </column>
@@ -18,14 +18,15 @@
     <row fillMaxWidth="1">
 
         <!-- LEFT -->
-        <column fillMaxHeight="1" padding="10,5, 78" background="#353535">
+        <column fillMaxHeight="1" padding="10,10,10,10" background="#353535" horizontalAlignment="center">
             <button onClick="$button1" color="#d9d9d9" size="150,50">$btnText1=CONNECT</button>
             <button onClick="$button2" color="#d9d9d9" size="150,50">$btnText2</button>
             <button onClick="$button3" color="#d9d9d9" size="150,50">$btnText3</button>
+            <text color="#d9d9d9" fontSize="12">https://github.com/d-gaspar</text>
         </column>
 
         <!-- RIGHT -->
-        <column fillMaxSize="1" padding="10" background="#000000">
+        <column id="$contentBlock" fillMaxSize="1" padding="10,10,10,10" background="#000000">
             <text color="#FFFFFF">CONTENT</text>
         </column>
     </row>

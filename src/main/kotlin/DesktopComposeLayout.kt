@@ -33,6 +33,7 @@ class DesktopComposeLayout {
     var layoutDir : String = ""
     var onVariableChange : (() -> Unit)? = null
     var ID = HashMap<String, MutableState<String>>()
+    //var layoutContentID = HashMap<String, (() -> Unit)>()
 
     constructor(layoutDir : String = "res/layout/") {
         this.layoutDir = layoutDir
@@ -66,7 +67,9 @@ class DesktopComposeLayout {
 
     @Composable
     fun getLayout(fileName : String, onVariableChange : (() -> Unit)? = null) { // xml file
-        this.onVariableChange = onVariableChange
+        if (onVariableChange != null) {
+            this.onVariableChange = onVariableChange
+        }
 
         val xmlFile : File = File(layoutDir + fileName)
 
@@ -95,16 +98,42 @@ class DesktopComposeLayout {
 
                     Box(
                         modifier = modifier
-                    )
+                    ){
+                        checkXMLChilds(childNodes.item(i))
+                    }
                 }
                 "column"    -> {
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     Column (
-                        modifier = modifier//,
-                        //horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = modifier,
+                        horizontalAlignment = if ("horizontalAlignment" in otherAttributes.keys) {
+                            when (otherAttributes["horizontalAlignment"]) {
+                                "end" -> Alignment.End
+                                "center" -> Alignment.CenterHorizontally
+                                "centerHorizontally" -> Alignment.CenterHorizontally
+                                else -> Alignment.Start
+                            }
+                        } else Alignment.Start
                     ){
-                        checkXMLChilds(childNodes.item(i))
+                        if ("id" in otherAttributes) {
+                            otherAttributes["id"] = otherAttributes["id"]!!.replace("$", "")
+
+                            // default layout
+                            if (otherAttributes["id"] !in ID.keys) {
+                                checkXMLChilds(childNodes.item(i))
+
+                                // create id on hashmap IDs
+                                addID(otherAttributes["id"]!!, "")
+                            }
+
+                            // import xml
+                            if (ID[otherAttributes["id"]]!!.value.isNotEmpty()) {
+                                getLayout(ID[otherAttributes["id"]]!!.value)
+                            }
+                        } else {
+                            checkXMLChilds(childNodes.item(i))
+                        }
                     }
                 }
                 "row"       -> {
@@ -113,9 +142,9 @@ class DesktopComposeLayout {
                     Row (
                         modifier = modifier,
                         verticalAlignment = if ("verticalAlignment" in otherAttributes.keys) {
-                            when (otherAttributes["color"]) {
-                                "top" -> Alignment.Top
+                            when (otherAttributes["verticalAlignment"]) {
                                 "bottom" -> Alignment.Bottom
+                                "center" -> Alignment.CenterVertically
                                 "centerVertically" -> Alignment.CenterVertically
                                 else -> Alignment.Top
                             }
@@ -141,6 +170,9 @@ class DesktopComposeLayout {
                         fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
                         fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
                     )
+
+                    // add margin
+                    Spacer(modifier = Modifier.width(10.dp).height(10.dp))
                 }
                 "button"    -> {
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
@@ -164,22 +196,6 @@ class DesktopComposeLayout {
                             it.groupValues[2]
                         }
                     }
-                    /*val text = childNodes.item(i).textContent.replace(
-                        regexAttribute()
-                    ){
-                        //addID(it.groupValues[1], "")
-                        //""+ID[it.groupValues[1]]?.value
-
-                        // id
-                        addID(it.groupValues[1], it.groupValues[2])
-
-                        // default text
-                        if (it.groupValues[1].isNotEmpty()) {
-                            ""+ID[it.groupValues[1]]?.value
-                        } else {
-                            it.groupValues[2]
-                        }
-                    }*/
 
                     Button(
                         onClick = {
@@ -248,7 +264,7 @@ class DesktopComposeLayout {
                             regexAttribute()
                         ){
                             // groupValues => [1] $id; [2] hex_color
-                            if (it.groupValues.size == 3) { // maybe not necessary
+                            if (it.groupValues.size == 3) {
                                 // id
                                 addID(it.groupValues[1], it.groupValues[2])
 

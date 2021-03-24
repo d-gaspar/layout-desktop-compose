@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<box>
+<column background="#CCCCCC" fillMaxSize="1">
     <column align="center">
         <text>BBBBBBBBB6</text>
     </column>
     <text>BBBBBBBBB1</text>
-    <row>
+    <row verticalAlignment="center">
         <text>BBBBBBBBB2</text>
         <button>CCCCCCCCCCCCCCCCC</button>
     </row>
@@ -13,4 +13,4 @@
         <text>item 2</text>
     </row>
     <text>End of file</text>
-</box>
+</column>
