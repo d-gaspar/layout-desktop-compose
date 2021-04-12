@@ -9,7 +9,9 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
+import androidx.compose.material.*
+//import androidx.compose.material.Button
+//import androidx.compose.material.ButtonConstants
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -31,7 +33,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class DesktopComposeLayout {
     var layoutDir : String = ""
-    var onVariableChange : (() -> Unit)? = null
+    var onButtonClick : (() -> Unit)? = null
     var ID = HashMap<String, MutableState<String>>()
     //var layoutContentID = HashMap<String, (() -> Unit)>()
 
@@ -57,7 +59,7 @@ class DesktopComposeLayout {
         if (id in ID.keys) {
             ID[id]!!.value = "on"
 
-            onVariableChange?.invoke()
+            onButtonClick?.invoke()
 
             ID[id]!!.value = "off"
         }
@@ -66,9 +68,9 @@ class DesktopComposeLayout {
     /*********************************************************************************************************/
 
     @Composable
-    fun getLayout(fileName : String, onVariableChange : (() -> Unit)? = null) { // xml file
-        if (onVariableChange != null) {
-            this.onVariableChange = onVariableChange
+    fun getLayout(fileName : String, onButtonClick : (() -> Unit)? = null) { // xml file
+        if (onButtonClick != null) {
+            this.onButtonClick = onButtonClick
         }
 
         val xmlFile : File = File(layoutDir + fileName)
@@ -101,6 +103,15 @@ class DesktopComposeLayout {
                     ){
                         checkXMLChilds(childNodes.item(i))
                     }
+
+                    // add margin
+                    if ("margin" in  otherAttributes.keys) {
+                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+                    } else {
+                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
+                    }
                 }
                 "column"    -> {
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
@@ -121,8 +132,6 @@ class DesktopComposeLayout {
 
                             // default layout
                             if (otherAttributes["id"] !in ID.keys) {
-                                checkXMLChilds(childNodes.item(i))
-
                                 // create id on hashmap IDs
                                 addID(otherAttributes["id"]!!, "")
                             }
@@ -130,10 +139,21 @@ class DesktopComposeLayout {
                             // import xml
                             if (ID[otherAttributes["id"]]!!.value.isNotEmpty()) {
                                 getLayout(ID[otherAttributes["id"]]!!.value)
+                            } else {
+                                checkXMLChilds(childNodes.item(i))
                             }
                         } else {
                             checkXMLChilds(childNodes.item(i))
                         }
+                    }
+
+                    // add margin
+                    if ("margin" in  otherAttributes.keys) {
+                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+                    } else {
+                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
                     }
                 }
                 "row"       -> {
@@ -152,8 +172,21 @@ class DesktopComposeLayout {
                     ){
                         checkXMLChilds(childNodes.item(i))
                     }
+
+                    // add margin
+                    if ("margin" in  otherAttributes.keys) {
+                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+                    } else {
+                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
+                    }
                 }
                 "text"      -> {
+                    /*for (ii in 0 until childNodes.item(i).attributes.length) {
+                        println("TEXT: " + childNodes.item(i).attributes.item(ii))
+                    }*/
+
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     // text id
@@ -166,16 +199,32 @@ class DesktopComposeLayout {
 
                     Text(
                         text,
+                        modifier = modifier,
                         color = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
                         fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
                         fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
                     )
 
                     // add margin
-                    Spacer(modifier = Modifier.width(10.dp).height(10.dp))
+                    if ("margin" in  otherAttributes.keys) {
+                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+                    } else {
+                        Spacer(modifier = Modifier.width(10.dp).height(10.dp))
+                    }
                 }
                 "button"    -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
+                    // ignore background and color because they aren't a modifier
+                    var ignoreAttributes : ArrayList<String> = arrayListOf()
+                    for (ii in 0 until childNodes.item(i).attributes.length) {
+                        var nodeName = childNodes.item(i).attributes.item(ii).nodeName
+
+                        if (nodeName in arrayOf("background", "color"))
+                            ignoreAttributes.add(nodeName)
+                    }
+
+                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, ignoreAttributes)
 
                     // add id
                     if ("onClick" in otherAttributes.keys){
@@ -198,23 +247,28 @@ class DesktopComposeLayout {
                     }
 
                     Button(
+                        modifier = modifier,
                         onClick = {
-                            if ("onClick" in otherAttributes.keys){
+                            if ("onClick" in otherAttributes.keys) {
                                 buttonOnClick(otherAttributes["onClick"]!!.toString().replace("\$", ""))
                             }
                         },
-                        modifier = modifier
-                    ){
-                        Text(
-                            text,
-                            color = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else Color.Unspecified,
-                            fontSize = if ("fontSize" in otherAttributes.keys && otherAttributes["fontSize"]!!.isNotEmpty()) otherAttributes["fontSize"]!!.toInt().sp else TextUnit.Unspecified,
-                            fontWeight = if ("fontWeight" in otherAttributes.keys && otherAttributes["fontWeight"]!!.isNotEmpty()) FontWeight(otherAttributes["fontWeight"]!!.toInt()) else null
+                        colors = ButtonConstants.defaultButtonColors(
+                            backgroundColor = if ("background" in otherAttributes.keys) getColorByHex(otherAttributes["background"]!!) else MaterialTheme.colors.primary,
+                            contentColor = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else contentColorFor(MaterialTheme.colors.primary)
                         )
+                    ){
+                        checkXMLChilds(childNodes.item(i))
                     }
 
                     // add margin
-                    Spacer(modifier = Modifier.width(10.dp).height(10.dp))
+                    if ("margin" in  otherAttributes.keys) {
+                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+                    } else {
+                        Spacer(modifier = Modifier.width(10.dp).height(10.dp))
+                    }
                 }
             }
         }
@@ -224,7 +278,10 @@ class DesktopComposeLayout {
 
     /*********************************************************************************************************/
 
-    private fun getModifier(attributes: NamedNodeMap) : Pair<Modifier, HashMap<String, String>> {
+    private fun getModifier(
+        attributes : NamedNodeMap,
+        ignoreAttributes : ArrayList<String> = arrayListOf()
+    ) : Pair<Modifier, HashMap<String, String>> {
         var modifier = Modifier.defaultMinSizeConstraints()
         var otherAttributes = HashMap<String, String>()
 
@@ -258,62 +315,63 @@ class DesktopComposeLayout {
              * add desktop compose items
              * */
             for (i in attributeOrder) {
-                when (attributes.item(i).nodeName) {
+                var nodeName = attributes.item(i).nodeName
+                var nodeID = ""
+                var nodeValue = attributes.item(i).nodeValue.toString().replace(
+                    regexAttribute()
+                ){
+                    // nodeID
+                    addID(it.groupValues[1], it.groupValues[2])
+                    nodeID = it.groupValues[1]
+
+                    // nodeValue
+                    it.groupValues[2]
+                }
+
+                // ignore attribute
+                if (nodeName in ignoreAttributes) {
+                    if (nodeID in ID.keys) {
+                        otherAttributes[nodeName] = ID[nodeID]!!.value
+                    } else {
+                        otherAttributes[nodeName] = nodeValue
+                    }
+                    continue
+                }
+
+                when (nodeName) {
                     "background" -> {
-                        var value = getColorByHex(attributes.item(i).nodeValue.toString().replace(
-                            regexAttribute()
-                        ){
-                            // groupValues => [1] $id; [2] hex_color
-                            if (it.groupValues.size == 3) {
-                                // id
-                                addID(it.groupValues[1], it.groupValues[2])
-
-                                // add modifier
-                                if (it.groupValues[1].isNotEmpty()) {
-                                    ""+ID[it.groupValues[1]]?.value
-                                } else {
-                                    it.groupValues[2]
-                                }
-                            } else {
-                                println("ERROR")
-                                // Color.Unspecified
-                                ""
-                            }
-                        })
-
-                        modifier = modifier.background(value)
+                        modifier = if (nodeID in ID.keys) {
+                            modifier.background(
+                                getColorByHex(ID[nodeID]!!.value)
+                            )
+                        } else {
+                            modifier.background(
+                                getColorByHex(nodeValue)
+                            )
+                        }
                     }
                     "clip" -> {
-                        when (attributes.item(i).nodeValue) {
+                        when (nodeValue) {
                             "circle" -> modifier = modifier.clip(CircleShape)
                         }
                     }
                     "fillMaxHeight" -> {
-                        var value = attributes.item(i).nodeValue.toFloatOrNull()
-
-                        // default value
-                        if (value == null) value = 1f
-
-                        modifier = modifier.fillMaxHeight(value)
+                        modifier = modifier.fillMaxHeight(
+                            nodeValue.toFloatOrNull() ?: 1f
+                        )
                     }
                     "fillMaxSize" -> {
-                        var value = attributes.item(i).nodeValue.toFloatOrNull()
-
-                        // default value
-                        if (value == null) value = 1f
-
-                        modifier = modifier.fillMaxSize(value)
+                        modifier = modifier.fillMaxSize(
+                            nodeValue.toFloatOrNull() ?: 1f
+                        )
                     }
                     "fillMaxWidth" -> {
-                        var value = attributes.item(i).nodeValue.toFloatOrNull()
-
-                        // default value
-                        if (value == null) value = 1f
-
-                        modifier = modifier.fillMaxWidth(value)
+                        modifier = modifier.fillMaxWidth(
+                            nodeValue.toFloatOrNull() ?: 1f
+                        )
                     }
                     "padding" -> {
-                        var stringValue = attributes.item(i).nodeValue.replace(" ", "")
+                        var stringValue = nodeValue.replace(" ", "")
                         var value : MutableList<Int> = mutableListOf(0, 0, 0, 0)
 
                         if (stringValue.isNotEmpty()) {
@@ -330,7 +388,7 @@ class DesktopComposeLayout {
                         )
                     }
                     "size" -> {
-                        var stringValue = attributes.item(i).nodeValue.replace(" ", "")
+                        var stringValue = nodeValue.replace(" ", "")
                         var value : MutableList<Int> = mutableListOf()
 
                         if (stringValue.isNotEmpty()) {
@@ -349,8 +407,7 @@ class DesktopComposeLayout {
                         }
                     }
                     else -> {
-
-                        otherAttributes[attributes.item(i).nodeName] = attributes.item(i).nodeValue
+                        otherAttributes[nodeName] = nodeValue
                     }
                 }
             }

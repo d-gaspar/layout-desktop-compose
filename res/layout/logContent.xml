@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<column background="#DDDDDD" fillMaxSize="1">
+    <row background="#CCCCCC" fillMaxWidth="1" verticalAlignment="center">
+        <text fontSize="30" padding="10,10,10,10">Log</text>
+        <button onClick="$logRefreshButton" background="#FF0000" padding="10,10,10,10">
+            <text>Refresh</text>
+        </button>
+    </row>
+    <column id="$logItems" align="center" padding="5,5,5,5">
+        <row fillMaxWidth="1" background="#999999" padding="3,3,3,3" margin="0,5">
+            <text color="#FFFFFF">BBBBBBBBB1</text>
+        </row>
+        <row fillMaxWidth="1" background="#999999" padding="3,3,3,3">
+            <text color="#FFFFFF">BBBBBBBBB2</text>
+        </row>
+    </column>
+</column>

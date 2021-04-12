@@ -27,7 +27,7 @@ fun main() {
     Window (
         title = "layout-desktop-compose"
     ){
-        mainLayout.getLayout("example1.xml", onVariableChange = {
+        mainLayout.getLayout("example1.xml", onButtonClick = {
             // list all ids
             //mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
 
@@ -38,9 +38,13 @@ fun main() {
                 if (mainLayout.ID["btnText1"]?.value == "CONNECT") {
                     mainLayout.ID["connectionCircle"]?.value = "#32FF32"
                     mainLayout.ID["btnText1"]?.value = "DISCONNECT"
+
+                    mainLayout.ID["btn1Background"]?.value = "#a63603"
                 } else {
                     mainLayout.ID["connectionCircle"]?.value = "#FF3232"
                     mainLayout.ID["btnText1"]?.value = "CONNECT"
+
+                    mainLayout.ID["btn1Background"]?.value = "#f16913"
                 }
             }
 
@@ -49,7 +53,7 @@ fun main() {
 
                 mainLayout.ID["btnText2"]?.value += "A"
 
-                mainLayout.ID["contentBlock"]?.value = "example2.xml"
+                mainLayout.ID["contentBlock"]?.value = "logContent.xml"
             }
 
             // button 3
@@ -58,6 +62,10 @@ fun main() {
 
                 mainLayout.ID["contentBlock"]?.value = ""
             }
+
+            /*if (mainLayout.ID["logRefreshButton"]?.value == "on") {
+                println("AAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBB")
+            }*/
         })
     }
 }
