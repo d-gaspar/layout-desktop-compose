@@ -35,11 +35,30 @@ class DesktopComposeLayout {
     var layoutDir : String = ""
     var onButtonClick : (() -> Unit)? = null
     var ID = HashMap<String, MutableState<String>>()
+    var ID2 = HashMap<String, MutableList<String>>()
     //var layoutContentID = HashMap<String, (() -> Unit)>()
 
     constructor(layoutDir : String = "res/layout/") {
         this.layoutDir = layoutDir
     }
+
+    /*********************************************************************************************************/
+
+    /** PUBLIC FUNCTIONS */
+
+    fun buttonClicked(buttonID : String, action : (() -> Unit)?) {
+        if (ID[buttonID]?.value == "on") {
+            action?.invoke()
+        }
+    }
+
+    /*fun updateID(key : String, newValue: String, pos : Int = 0) {
+
+    }
+
+    fun appendID() {
+
+    }*/
 
     /*********************************************************************************************************/
 
@@ -183,10 +202,6 @@ class DesktopComposeLayout {
                     }
                 }
                 "text"      -> {
-                    /*for (ii in 0 until childNodes.item(i).attributes.length) {
-                        println("TEXT: " + childNodes.item(i).attributes.item(ii))
-                    }*/
-
                     val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes)
 
                     // text id
