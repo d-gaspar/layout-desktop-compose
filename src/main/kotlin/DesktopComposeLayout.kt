@@ -34,8 +34,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 class DesktopComposeLayout {
     var layoutDir : String = ""
     var onButtonClick : (() -> Unit)? = null
-    var ID = HashMap<String, MutableState<String>>()
-    var ID2 = HashMap<String, MutableList<String>>()
+    private var ID = HashMap<String, MutableState<String>>()
+    //var ID2 = HashMap<String, MutableList<String>>()
     //var layoutContentID = HashMap<String, (() -> Unit)>()
 
     constructor(layoutDir : String = "res/layout/") {
@@ -45,6 +45,14 @@ class DesktopComposeLayout {
     /*********************************************************************************************************/
 
     /** PUBLIC FUNCTIONS */
+
+    fun getID(key : String, pos : Int = 0) : String {
+        return ID[key]?.value.toString()
+    }
+
+    fun setID(key: String, value : String, pos : Int = 0) {
+        ID[key]?.value = value
+    }
 
     fun buttonClicked(buttonID : String, action : (() -> Unit)?) {
         if (ID[buttonID]?.value == "on") {
@@ -62,25 +70,25 @@ class DesktopComposeLayout {
 
     /*********************************************************************************************************/
 
-    private fun addID(id : String, newValue : String) {
+    private fun addID(key : String, value : String) {
         // empty id
-        if (id.isEmpty()) return
+        if (key.isEmpty()) return
 
-        if (id !in ID.keys) {
-            ID[id] = mutableStateOf(newValue)
+        if (key !in ID.keys) {
+            ID[key] = mutableStateOf(value)
         }
     }
 
-    private fun buttonOnClick(id : String) {
-        // empty id
-        if (id.isEmpty()) return
+    private fun buttonOnClick(key : String) {
+        // empty id (key)
+        if (key.isEmpty()) return
 
-        if (id in ID.keys) {
-            ID[id]!!.value = "on"
+        if (key in ID.keys) {
+            setID(key, "on")
 
             onButtonClick?.invoke()
 
-            ID[id]!!.value = "off"
+            setID(key, "off")
         }
     }
 
@@ -156,8 +164,8 @@ class DesktopComposeLayout {
                             }
 
                             // import xml
-                            if (ID[otherAttributes["id"]]!!.value.isNotEmpty()) {
-                                getLayout(ID[otherAttributes["id"]]!!.value)
+                            if (getID(otherAttributes["id"]!!).isNotEmpty()) {
+                                getLayout(getID(otherAttributes["id"]!!))
                             } else {
                                 checkXMLChilds(childNodes.item(i))
                             }
@@ -209,7 +217,7 @@ class DesktopComposeLayout {
                         regexText()
                     ){
                         addID(it.groupValues[1], "")
-                        ""+ID[it.groupValues[1]]?.value
+                        "" + getID(it.groupValues[1])
                     }
 
                     Text(
@@ -247,7 +255,7 @@ class DesktopComposeLayout {
                     }
 
                     // text id
-                    val text = childNodes.item(i).textContent.replace(
+                    /*val text = */childNodes.item(i).textContent.replace(
                         regexText()
                     ){
                         // id
@@ -255,7 +263,7 @@ class DesktopComposeLayout {
 
                         // default text
                         if (it.groupValues[1].isNotEmpty()) {
-                            ""+ID[it.groupValues[1]]?.value
+                            "" + getID(it.groupValues[1])
                         } else {
                             it.groupValues[2]
                         }
@@ -346,7 +354,7 @@ class DesktopComposeLayout {
                 // ignore attribute
                 if (nodeName in ignoreAttributes) {
                     if (nodeID in ID.keys) {
-                        otherAttributes[nodeName] = ID[nodeID]!!.value
+                        otherAttributes[nodeName] = getID(nodeID)
                     } else {
                         otherAttributes[nodeName] = nodeValue
                     }
@@ -357,7 +365,7 @@ class DesktopComposeLayout {
                     "background" -> {
                         modifier = if (nodeID in ID.keys) {
                             modifier.background(
-                                getColorByHex(ID[nodeID]!!.value)
+                                getColorByHex(getID(nodeID))
                             )
                         } else {
                             modifier.background(

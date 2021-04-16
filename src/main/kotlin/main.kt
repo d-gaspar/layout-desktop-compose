@@ -22,49 +22,57 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 fun main() {
-    var mainLayout = DesktopComposeLayout()
+    var layout = DesktopComposeLayout()
 
     Window (
         title = "layout-desktop-compose"
     ){
-        mainLayout.getLayout("example1.xml", onButtonClick = {
+        layout.getLayout("example1.xml", onButtonClick = {
             // list all ids
             //mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
 
             // button 1
-            mainLayout.buttonClicked("button1") {
-                mainLayout.ID["ip"]?.value = "127.0.0.1"
+            layout.buttonClicked("button1") {
+                layout.setID("ip", "127.0.0.1")
 
-                if (mainLayout.ID["btnText1"]?.value == "CONNECT") {
-                    mainLayout.ID["connectionCircle"]?.value = "#32FF32"
-                    mainLayout.ID["btnText1"]?.value = "DISCONNECT"
+                if (layout.getID("btnText1") == "CONNECT") {
+                    layout.setID("connectionCircle", "#32FF32")
+                    layout.setID("btnText1", "DISCONNECT")
 
-                    mainLayout.ID["btn1Background"]?.value = "#a63603"
+                    layout.setID("btn1Background", "#a63603")
                 } else {
-                    mainLayout.ID["connectionCircle"]?.value = "#FF3232"
-                    mainLayout.ID["btnText1"]?.value = "CONNECT"
+                    layout.setID("connectionCircle", "#FF3232")
+                    layout.setID("btnText1", "CONNECT")
 
-                    mainLayout.ID["btn1Background"]?.value = "#f16913"
+                    layout.setID("btn1Background", "#f16913")
                 }
             }
 
             // button 2
-            mainLayout.buttonClicked("button2") {
-                mainLayout.ID["btnText2"]?.value += "A"
+            layout.buttonClicked("button2") {
+                layout.setID(
+                    "btnText2",
+                    layout.getID("btnText2") + "A"
+                )
 
-                mainLayout.ID["contentBlock"]?.value = "logContent.xml"
+                layout.setID("contentBlock", "logContent.xml")
             }
 
             // button 3
-            mainLayout.buttonClicked("button3") {
-                mainLayout.ID["btnText3"]?.value += "B"
+            layout.buttonClicked("button3") {
+                layout.setID(
+                    "btnText3",
+                    layout.getID("btnText3") + "B"
+                )
 
-                mainLayout.ID["contentBlock"]?.value = ""
+                layout.setID("contentBlock", "")
+
+                layout.setID("logItems", "")
             }
 
             // log refresh button
-            mainLayout.buttonClicked("logRefreshButton") {
-                mainLayout.ID["logItems"]?.value = "logItem.xml"
+            layout.buttonClicked("logRefreshButton") {
+                layout.setID("logItems", "logItem.xml")
             }
         })
     }
