@@ -13,10 +13,7 @@ import androidx.compose.material.*
 //import androidx.compose.material.Button
 //import androidx.compose.material.ButtonConstants
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,8 +31,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 class DesktopComposeLayout {
     var layoutDir : String = ""
     var onButtonClick : (() -> Unit)? = null
-    private var ID = HashMap<String, MutableState<String>>()
-    //var ID2 = HashMap<String, MutableList<String>>()
+    var ID = HashMap<String, HashMap<Int, MutableState<String>>>() // [id, [index, value]]
     //var layoutContentID = HashMap<String, (() -> Unit)>()
 
     constructor(layoutDir : String = "res/layout/") {
@@ -47,35 +43,34 @@ class DesktopComposeLayout {
     /** PUBLIC FUNCTIONS */
 
     fun getID(key : String, pos : Int = 0) : String {
-        return ID[key]?.value.toString()
+        return if (key in ID.keys) {
+            ID[key]!![pos]?.value.toString()
+        } else {
+            ""
+        }
     }
 
     fun setID(key: String, value : String, pos : Int = 0) {
-        ID[key]?.value = value
+        if (key in ID.keys) {
+            ID[key]!![pos]?.value = value
+        }
     }
 
     fun buttonClicked(buttonID : String, action : (() -> Unit)?) {
-        if (ID[buttonID]?.value == "on") {
+        if (ID[buttonID]?.get(0)?.value == "on") {
             action?.invoke()
         }
     }
 
-    /*fun updateID(key : String, newValue: String, pos : Int = 0) {
-
-    }
-
-    fun appendID() {
-
-    }*/
-
     /*********************************************************************************************************/
 
-    private fun addID(key : String, value : String) {
+    private fun addID2(key : String, value : String) {
         // empty id
         if (key.isEmpty()) return
 
         if (key !in ID.keys) {
-            ID[key] = mutableStateOf(value)
+            ID[key] = hashMapOf()
+            ID[key]!![0] = mutableStateOf(value)
         }
     }
 
@@ -89,6 +84,7 @@ class DesktopComposeLayout {
             onButtonClick?.invoke()
 
             setID(key, "off")
+            ID[key]!![0]!!.value = "off" // qqq
         }
     }
 
@@ -160,7 +156,7 @@ class DesktopComposeLayout {
                             // default layout
                             if (otherAttributes["id"] !in ID.keys) {
                                 // create id on hashmap IDs
-                                addID(otherAttributes["id"]!!, "")
+                                addID2(otherAttributes["id"]!!, "")
                             }
 
                             // import xml
@@ -216,7 +212,7 @@ class DesktopComposeLayout {
                     val text = childNodes.item(i).textContent.replace(
                         regexText()
                     ){
-                        addID(it.groupValues[1], "")
+                        addID2(it.groupValues[1], "")
                         "" + getID(it.groupValues[1])
                     }
 
@@ -251,7 +247,7 @@ class DesktopComposeLayout {
 
                     // add id
                     if ("onClick" in otherAttributes.keys){
-                        addID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off")
+                        addID2(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off")
                     }
 
                     // text id
@@ -259,7 +255,7 @@ class DesktopComposeLayout {
                         regexText()
                     ){
                         // id
-                        addID(it.groupValues[1], it.groupValues[2])
+                        addID2(it.groupValues[1], it.groupValues[2])
 
                         // default text
                         if (it.groupValues[1].isNotEmpty()) {
@@ -344,7 +340,7 @@ class DesktopComposeLayout {
                     regexAttribute()
                 ){
                     // nodeID
-                    addID(it.groupValues[1], it.groupValues[2])
+                    addID2(it.groupValues[1], it.groupValues[2])
                     nodeID = it.groupValues[1]
 
                     // nodeValue
@@ -353,6 +349,7 @@ class DesktopComposeLayout {
 
                 // ignore attribute
                 if (nodeName in ignoreAttributes) {
+                    //if (nodeID in ID.keys) {
                     if (nodeID in ID.keys) {
                         otherAttributes[nodeName] = getID(nodeID)
                     } else {

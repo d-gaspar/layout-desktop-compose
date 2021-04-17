@@ -33,7 +33,7 @@ fun main() {
 
             // button 1
             layout.buttonClicked("button1") {
-                layout.setID("ip", "127.0.0.1")
+                 layout.setID("ip", "127.0.0.1")
 
                 if (layout.getID("btnText1") == "CONNECT") {
                     layout.setID("connectionCircle", "#32FF32")
