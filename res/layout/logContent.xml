@@ -2,8 +2,14 @@
 <column background="#DDDDDD" fillMaxSize="1">
     <row background="#CCCCCC" fillMaxWidth="1" verticalAlignment="center">
         <text fontSize="30" padding="10,10,10,10">Log</text>
-        <button onClick="$logRefreshButton" background="#FF0000" padding="10,10,10,10">
-            <text>Refresh</text>
+        <button onClick="$addButton" background="#FF0000" padding="10,10,10,10">
+            <text>ADD</text>
+        </button>
+        <button onClick="$removeButton" background="#FF0000" padding="10,10,10,10">
+            <text>REMOVE LAST</text>
+        </button>
+        <button onClick="$clearButton" background="#FF0000" padding="10,10,10,10">
+            <text>CLEAR</text>
         </button>
     </row>
     <column id="$logItems" align="center" padding="5,5,5,5">
