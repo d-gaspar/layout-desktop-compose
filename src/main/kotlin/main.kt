@@ -34,24 +34,24 @@ fun main() {
 
             /** button 1 */
             layout.buttonClicked("button1") {
-                println(">> button1")
+                println(">> button1:")
 
-                if (layout.ID.getValue("btnText1") == "CONNECT") {
-                    layout.ID.setValue("ip", "127.0.0.1")
-                    layout.ID.setValue("connectionCircle", "#32FF32")
+                if (layout.get("btnText1") == "CONNECT") {
+                    layout.set("ip", "127.0.0.1")
+                    layout.set("connectionCircle", "#32FF32")
 
-                    layout.ID.setValue("btnText1", "DISCONNECT")
-                    layout.ID.setValue("btn1Background", "#a63603")
+                    layout.set("btnText1", "DISCONNECT")
+                    layout.set("btn1Background", "#a63603")
                 } else {
-                    layout.ID.setValue("ip", "")
-                    layout.ID.setValue("connectionCircle", "#FF3232")
+                    layout.set("ip", "")
+                    layout.set("connectionCircle", "#FF3232")
 
-                    layout.ID.setValue("btnText1", "CONNECT")
-                    layout.ID.setValue("btn1Background", "#f16913")
+                    layout.set("btnText1", "CONNECT")
+                    layout.set("btn1Background", "#f16913")
                 }
 
                 // test
-                layout.ID.tree()
+                layout.tree()
             }
 
             /*************************************************************************************************/
@@ -60,11 +60,11 @@ fun main() {
             layout.buttonClicked("button2") {
                 println(">> button2:")
 
-                layout.ID.setValue("btnText2", "on")
+                layout.set("btnText2", "on")
 
-                layout.ID.setValue("btnText3", "off")
+                layout.set("btnText3", "off")
 
-                layout.ID.setValue("contentBlock", "logContent.xml")
+                layout.set("contentBlock", "logContent.xml")
             }
 
             /*************************************************************************************************/
@@ -73,22 +73,23 @@ fun main() {
             layout.buttonClicked("button3") {
                 println(">> button3:")
 
-                layout.ID.setValue("btnText2", "off")
+                layout.set("btnText2", "off")
 
-                layout.ID.setValue("btnText3", "on")
+                layout.set("btnText3", "on")
 
-                layout.ID.setValue("contentBlock", "")
+                layout.set("contentBlock", "")
             }
 
             /*************************************************************************************************/
 
             // add log button
             layout.buttonClicked("addButton") {
-                println("AAAAAAAAAAAAAA")
+                println(">> addButton:")
 
-                layout.ID.setValue("logItems", "logItem.xml")
+                //layout.set("logItems", "logItem.xml")
+                layout.append("logItems", "logItem.xml")
 
-                //layout.ID.find("logItems")?.addChild(LayoutTree("itemText", ""))
+
 
                 /*layout.appendID("logItems", "logItem.xml") {
 
@@ -103,18 +104,6 @@ fun main() {
             /*************************************************************************************************/
 
             /*
-            // add log button
-            layout.buttonClicked("addButton") {
-                layout.appendID("logItems", "logItem.xml") {
-
-                    layout.ID["itemText"]!![0]!!.value = "TESTE"
-
-                    layout.ID["logItems"]?.forEach { (key, value) -> println("logItems > $key = ${value.value}")}
-
-                    layout.ID["itemText"]?.forEach { (key, value) -> println("itemText > $key = ${value.value}")}
-                }
-            }
-
             // remove last log button
             layout.buttonClicked("removeButton") {
                 layout.removeIDItem("logItems", layout.getIDList("logItems").last())
