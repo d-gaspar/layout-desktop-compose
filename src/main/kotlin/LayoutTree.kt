@@ -58,10 +58,20 @@ class LayoutTree<String> (key : String, value : String, id : Int = 0, appended :
         return find(key, id)?.value?.value
     }
 
-    fun getIDs(key : String, parentKey : String) : List<Int> {
+    fun getChildrenIDs(parentKey : String) : MutableList<Int> {
+        println(">>> |$parentKey|")
+        var layoutTreeNode = find(parentKey)
+        var childrenIDs : MutableList<Int> = mutableListOf()
 
+        if (layoutTreeNode != null) {
+            for (child in layoutTreeNode.children) {
+                if (child.id !in childrenIDs) {
+                    childrenIDs.add(child.id)
+                }
+            }
+        }
 
-        return listOf()
+        return childrenIDs
     }
 
     fun set(key : String, value : String, id : Int = 0) {

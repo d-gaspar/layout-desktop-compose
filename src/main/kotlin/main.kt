@@ -89,16 +89,7 @@ fun main() {
                 //layout.set("logItems", "logItem.xml")
                 layout.append("logItems", "logItem.xml")
 
-
-
-                /*layout.appendID("logItems", "logItem.xml") {
-
-                    layout.ID["itemText"]!![0]!!.value = "TESTE"
-
-                    layout.ID["logItems"]?.forEach { (key, value) -> println("logItems > $key = ${value.value}")}
-
-                    layout.ID["itemText"]?.forEach { (key, value) -> println("itemText > $key = ${value.value}")}
-                }*/
+                layout.set("itemText", "WWWWWWW", 0)
             }
 
             /*************************************************************************************************/
