@@ -19,17 +19,14 @@
 
         <!-- LEFT -->
         <column fillMaxHeight="1" padding="10,10,10,10" background="#353535" horizontalAlignment="center">
-            <!--
-            <button onClick="$button1" size="150,50" background="$aaa=#f16913" color="#FFFFFF">
-            -->
             <button onClick="$button1" size="150,50" background="$btn1Background=#f16913" color="#FFFFFF">
                 <text>$btnText1=CONNECT</text>
             </button>
             <button onClick="$button2" color="#d9d9d9" size="150,50">
-                <text>$btnText2</text>
+                <text>$btnText2=off</text>
             </button>
             <button onClick="$button3" color="#d9d9d9" size="150,50">
-                <text>$btnText3</text>
+                <text>$btnText3=on</text>
             </button>
             <text color="#d9d9d9" fontSize="12">https://github.com/d-gaspar</text>
         </column>

@@ -10,36 +10,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-//import androidx.compose.material.Button
-//import androidx.compose.material.ButtonConstants
-import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
-import java.io.EOFException
 import java.io.File
-import java.io.IOException
-import java.util.regex.Pattern
 import javax.xml.parsers.DocumentBuilderFactory
 
-class DesktopComposeLayout {
+class DesktopLayout {
     var layoutDir : String = ""
-    var onButtonClick : (() -> Unit)? = null
-    /**
-     * [id, [index, value]]
-     * "0" index is fixed, can't be removed
-     * */
-    var ID = HashMap<String, HashMap<Int, MutableState<String>>>()
-    var itemAppendedParent : MutableState<String> = mutableStateOf("")
-    var itemAppendPos : Int = -1
-    var itemAppendedAction : (() -> Unit)? = null
-    var itemRemoved : MutableState<Boolean> = mutableStateOf(false)
+    private var onButtonClick : (() -> Unit)? = null
+
+    private var appendParentKey : MutableState<String> = mutableStateOf("")
+    private var appendParentID : MutableState<Int> = mutableStateOf(0)
+
+    private var ID : LayoutTree<String> = LayoutTree("#document", "")
 
     constructor(layoutDir : String = "res/layout/") {
         this.layoutDir = layoutDir
@@ -49,105 +43,72 @@ class DesktopComposeLayout {
 
     /** PUBLIC FUNCTIONS */
 
-    fun getID(key : String, pos : Int = 0) : String {
-        return if (key in ID.keys) {
-            ID[key]!![pos]?.value.toString()
-        } else {
-            ""
+    fun get(key : String, id : Int = 0) : String? {
+        return ID.get(key, id)
+    }
+
+    fun set(key : String, value : String, id : Int = 0) {
+        ID.set(key, value, id)
+    }
+
+    fun append(key : String, value : String, id : Int = 0) {
+
+        if (ID.find(key, id) != null) {
+            // set xml id that will be imported
+            ID.set(key, value, id)
+            ID.find(key, id)!!.appended = true
+            ID.find(key, id)!!.appendedQty++
+
+            // set append vars
+            appendParentKey.value = key
+            appendParentID.value = id
+            //appendID = id
+
+            println("APPEND-- |$key|$value|${get(key, id)}|")
         }
     }
 
-    fun setID(key : String, value : String, pos : Int = 0) {
-        if (key in ID.keys) {
-            if (pos !in ID[key]!!.keys) {
-                ID[key]!![pos] = mutableStateOf(value)
-            } else {
-                ID[key]!![pos]?.value = value
-            }
-        }
+    fun tree() {
+        ID.tree()
     }
 
-    fun getIDList(key : String) : List<Int> { //: MutableSet<Int> {
-        return ID[key]!!.keys.toList()
-    }
-
-    // append new item on ID[key]
-    fun appendID(key : String, value : String, action : (() -> Unit)? = null) {
-        if (key in ID.keys) {
-            var maxIDIndex = getIDList(key).maxOrNull()
-
-            if (maxIDIndex != null) {
-                /** "0" index is fixed, can't be removed */
-                if (ID[key]!!.size == 1 && ID[key]!![0]!!.value.isEmpty()) {
-                    itemAppendPos = 0
-                    ID[key]!![itemAppendPos]!!.value = value
-                    println("AHHHHHHHHHHHHHHHHHH1: $key | $value | ${ID[key]?.keys}")
-                } else {
-                    itemAppendPos = maxIDIndex + 1
-                    ID[key]!![itemAppendPos] = mutableStateOf(value)
-                    println("AHHHHHHHHHHHHHHHHHH2: $key | $value | ${ID[key]?.keys}")
-                }
-
-                itemAppendedParent.value = key
-                itemAppendedAction = action
-            }
-        }
-    }
-
-    fun removeIDItem(key : String, pos : Int) {
-        if (key in ID.keys) {
-            /** "0" index is fixed, can't be removed */
-            if (pos == 0) {
-                ID[key]!![0]!!.value = ""
-            } else {
-                ID[key]!!.remove(pos)
-            }
-
-            itemRemoved.value = true
-        }
-    }
-
-    fun clearIDItems(key : String) {
-        for (i in getIDList(key)) {
-            if (i == 0) {
-                ID[key]!![0]!!.value = ""
-            } else {
-                ID[key]!!.remove(i)
-            }
-        }
-
-        itemRemoved.value = true
-    }
-
-    fun buttonClicked(buttonID : String, action : (() -> Unit)?) {
-        if (ID[buttonID]?.get(0)?.value == "on") {
+    fun buttonClicked(key : String, action : (() -> Unit)?) {
+        if (ID.get(key) == "on") {
             action?.invoke()
         }
     }
 
     /*********************************************************************************************************/
 
-    private fun addID(key : String, value : String, appendPos : Int) {
+    private fun addID(key : String, value : String, layoutTreeNode : LayoutTree<String> = ID) {
         // empty id
         if (key.isEmpty()) return
 
-        if (key !in ID.keys) {
-            ID[key] = hashMapOf()
+        /** APPEND = TRUE **/
+        if (appendParentKey.value.isNotEmpty() && appendParentKey.value == layoutTreeNode.key && appendParentID.value == layoutTreeNode.id) {
+            /** first child **/
+            if (!layoutTreeNode.has(key)) {
+                layoutTreeNode.addChild(LayoutTree(key, value))
 
-            if (appendPos == -1)
-                ID[key]!![0] = mutableStateOf(value)
-            else
-                ID[key]!![appendPos] = mutableStateOf(value)
+            /** another children **/
+            } else {
+                var id = 0
+                for (child in layoutTreeNode.children) {
+                    if (child.key == key && child.id >= id) {
+                        id = child.id + 1
+                    }
+                }
+                layoutTreeNode.addChild(LayoutTree(key, value, id))
+            }
 
-        /** item appended */
-        } else if (appendPos != -1 && appendPos == itemAppendPos){
-            println("NNNNNNNNNNNNNNNNNNNNNNNNNNN: ${itemAppendedParent.value} | $key | $itemAppendPos | $appendPos | ${ID.keys}")
-            ID[key]!![itemAppendPos] = mutableStateOf(value)
+            //appendParentKey.value = ""
+            //appendParentID.value = 0
 
-            //itemAppendedParent.value = ""
-
-            //itemAppendedAction?.invoke()
-            //itemAppendedAction = null
+        /** APPEND = FALSE **/
+        } else {
+            if (!layoutTreeNode.has(key)) {
+                layoutTreeNode.addChild(LayoutTree(key, value))
+            }
         }
     }
 
@@ -155,40 +116,36 @@ class DesktopComposeLayout {
         // empty id (key)
         if (key.isEmpty()) return
 
-        if (key in ID.keys) {
-            setID(key, "on")
+        if (ID.find(key) != null) {
+            ID.set(key, "on")
 
             onButtonClick?.invoke()
 
-            setID(key, "off")
+            ID.set(key, "off")
         }
     }
 
     /*********************************************************************************************************/
 
     @Composable
-    fun getLayout(fileName : String, appendPos : Int = -1, onButtonClick : (() -> Unit)? = null) { // xml file
+    //fun getLayout(fileName : String, layoutTreeNode : LayoutTree<String> = ID, onButtonClick : (() -> Unit)? = null) { // xml file
+    fun getLayout(fileName : String, childID : Int? = null, layoutTreeNode : LayoutTree<String> = ID, onButtonClick : (() -> Unit)? = null) { // xml file
         if (fileName.isEmpty()) return
 
-        if (onButtonClick != null) {
-            this.onButtonClick = onButtonClick
-        }
+        if (onButtonClick != null) this.onButtonClick = onButtonClick
 
         val xmlFile : File = File(layoutDir + fileName)
 
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlFile)
 
-        /** first element - must be: box, column or row  */
-        //val firstNode = doc.documentElement
-
-        /** recursive function to search all xml childs */
-        checkXMLChilds(doc, appendPos)
+        checkXMLChild(doc, layoutTreeNode, childID)
     }
 
     /*********************************************************************************************************/
 
     @Composable
-    private fun checkXMLChilds(node: Node, appendPos : Int) {
+    //private fun checkXMLChild(node: Node, layoutTreeNode : LayoutTree<String>, appendID : Int) {
+    private fun checkXMLChild(node: Node, layoutTreeNode : LayoutTree<String>, childID : Int?) {
         val childNodes = node.childNodes
 
         // empty node
@@ -196,26 +153,28 @@ class DesktopComposeLayout {
 
         for (i in 0 until childNodes.length) {
             when (childNodes.item(i).nodeName) {
-                "box"       -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, appendPos = appendPos)
+                "box" -> {
+                    val (modifier, otherAttributes) = getModifier(
+                        attributes = childNodes.item(i).attributes,
+                        layoutTreeNode = layoutTreeNode,
+                        childID = childID
+                    )
 
                     Box(
                         modifier = modifier
                     ){
-                        checkXMLChilds(childNodes.item(i), appendPos)
+                        checkXMLChild(childNodes.item(i), layoutTreeNode, childID)
                     }
 
                     // add margin
-                    if ("margin" in  otherAttributes.keys) {
-                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
-
-                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
-                    } else {
-                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
-                    }
+                    addMargin(otherAttributes)
                 }
-                "column"    -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, appendPos = appendPos)
+                "column" -> {
+                    val (modifier, otherAttributes) = getModifier(
+                        attributes = childNodes.item(i).attributes,
+                        layoutTreeNode = layoutTreeNode,
+                        childID = childID
+                    )
 
                     Column (
                         modifier = modifier,
@@ -227,64 +186,81 @@ class DesktopComposeLayout {
                                 else -> Alignment.Start
                             }
                         } else Alignment.Start
-                    ){
-                        // otherAttributes["id"] == key
+                    ) {
                         if ("id" in otherAttributes) {
                             otherAttributes["id"] = otherAttributes["id"]!!.replace("$", "")
 
                             // default layout
-                            if (otherAttributes["id"] !in ID.keys) {
-                                // create id on hashmap IDs
-                                addID(otherAttributes["id"]!!, "", appendPos)
+                            if (!layoutTreeNode.has(otherAttributes["id"]!!)) {
+                                addID(
+                                    key = otherAttributes["id"]!!,
+                                    value = "",
+                                    layoutTreeNode = layoutTreeNode
+                                )
                             }
 
                             // import xml
-                            if (getIDList(otherAttributes["id"]!!).size > 1 || getID(otherAttributes["id"]!!).isNotEmpty()) {
+                            if (layoutTreeNode.get(otherAttributes["id"]!!)!!.isNotEmpty()) {
+                                // check if current layout item is a list component
+                                if (layoutTreeNode.find(otherAttributes["id"]!!, allGenerations = false)!!.appended) {
+                                    var childrenIDs = layoutTreeNode.getChildrenIDs(otherAttributes["id"]!!)
 
-                                //println("OOOOOOOOOOOOOOOOOOOOO1: ${otherAttributes["id"]} | ${itemAppendedParent.value}")
-                                for (pos in getIDList(otherAttributes["id"]!!)) {
-                                    //println("VV: $pos")
-                                    getLayout(
-                                        fileName = getID(otherAttributes["id"]!!, pos),
-                                        appendPos = pos
-                                    )
-                                    /** reset itemAppendPos */
-                                    //itemAppendPos = -1
-                                }
+                                    if (appendParentKey.value.isNotEmpty()) {
+                                        if (childrenIDs.size == 0) {
+                                            childrenIDs.add(0)
+                                        } else {
+                                            childrenIDs.add(childrenIDs.max()!! + 1)
+                                        }
+                                    }
 
-                                /*if (otherAttributes["id"] == itemAppendedParent.value) {
-                                    //println("OOOOOOOOOOOOOOOOOOOOO2: ${otherAttributes["id"]} | ${itemAppendedParent.value}")
-                                    itemAppendedParent.value = ""
+                                    //println("AAA: |${childrenIDs.size}|${childrenIDs.max()}|")
+                                    for (childID in childrenIDs) {
+                                        println("DDD: |$childID|${otherAttributes["id"]!!}|")
+                                        getLayout(
+                                            fileName = layoutTreeNode.get(otherAttributes["id"]!!)!!,
+                                            childID = childID,
+                                            layoutTreeNode = layoutTreeNode.find(otherAttributes["id"]!!, allGenerations = false)!!
+                                        )
+                                        if (appendParentKey.value.isNotEmpty()) {
+                                            appendParentKey.value = ""
+                                            appendParentID.value = 0
+                                        }
+                                    }
 
-                                    itemAppendedAction?.invoke()
-                                    itemAppendedAction = null
+                                    /*var nChildren = layoutTreeNode.find(otherAttributes["id"]!!, allGenerations = false)!!.appendedQty
+                                    for (nChildren in 0 until nChildren) {
+                                        getLayout(
+                                            fileName = layoutTreeNode.get(otherAttributes["id"]!!)!!,
+                                            layoutTreeNode = layoutTreeNode.find(otherAttributes["id"]!!, allGenerations = false)!!
+                                        )
+                                        if (appendParentKey.value.isNotEmpty()) {
+                                            appendParentKey.value = ""
+                                            appendParentID.value = 0
+                                        }
+                                    }*/
                                 } else {
-
-                                }*/
-                                /** item appended or removed */
-                                //println("OOOOOOOOOOOOOOOOOOOOO3: ${otherAttributes["id"]} | ${itemAppendedParent.value}")
-                                //if (itemAppended.value.isNotEmpty()) itemAppended.value = "" // qqq
-                                //if (itemRemoved.value) itemRemoved.value = false // qqq
-
+                                    getLayout(
+                                        fileName = layoutTreeNode.get(otherAttributes["id"]!!)!!,
+                                        layoutTreeNode = layoutTreeNode.find(otherAttributes["id"]!!, allGenerations = false)!!
+                                    )
+                                }
                             } else {
-                                checkXMLChilds(childNodes.item(i), appendPos)
+                                checkXMLChild(childNodes.item(i), layoutTreeNode, childID)
                             }
                         } else {
-                            checkXMLChilds(childNodes.item(i), appendPos)
+                            checkXMLChild(childNodes.item(i), layoutTreeNode, childID)
                         }
                     }
 
                     // add margin
-                    if ("margin" in  otherAttributes.keys) {
-                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
-
-                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
-                    } else {
-                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
-                    }
+                    addMargin(otherAttributes)
                 }
-                "row"       -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, appendPos = appendPos)
+                "row" -> {
+                    val (modifier, otherAttributes) = getModifier(
+                        attributes = childNodes.item(i).attributes,
+                        layoutTreeNode = layoutTreeNode,
+                        childID = childID
+                    )
 
                     Row (
                         modifier = modifier,
@@ -296,28 +272,31 @@ class DesktopComposeLayout {
                                 else -> Alignment.Top
                             }
                         } else Alignment.Top
-                    ){
-                        checkXMLChilds(childNodes.item(i), appendPos = appendPos)
+                    ) {
+                        checkXMLChild(childNodes.item(i), layoutTreeNode, childID)
                     }
 
                     // add margin
-                    if ("margin" in  otherAttributes.keys) {
-                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
-
-                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
-                    } else {
-                        Spacer(modifier = Modifier.width(0.dp).height(0.dp))
-                    }
+                    addMargin(otherAttributes)
                 }
-                "text"      -> {
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, appendPos = appendPos)
+                "text" -> {
+                    val (modifier, otherAttributes) = getModifier(
+                        attributes = childNodes.item(i).attributes,
+                        layoutTreeNode = layoutTreeNode,
+                        childID = childID
+                    )
 
-                    // text id
                     val text = childNodes.item(i).textContent.replace(
                         regexText()
                     ){
-                        addID(it.groupValues[1], "", appendPos)
-                        "" + getID(it.groupValues[1])
+                        //println("JJJJ: |${it.groupValues[1]}|${it.groupValues[2]}|${layoutTreeNode.get(it.groupValues[1])}|${layoutTreeNode.key}|${layoutTreeNode.id}|")
+                        addID(
+                            key = it.groupValues[1],
+                            value = it.groupValues[2],
+                            layoutTreeNode = layoutTreeNode
+                        )
+                        "" + layoutTreeNode.get(it.groupValues[1], childID ?: 0)
+                        //"" + layoutTreeNode.get(it.groupValues[1])
                     }
 
                     Text(
@@ -329,41 +308,42 @@ class DesktopComposeLayout {
                     )
 
                     // add margin
-                    if ("margin" in  otherAttributes.keys) {
-                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
-
-                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
-                    } else {
-                        Spacer(modifier = Modifier.width(10.dp).height(10.dp))
-                    }
+                    addMargin(otherAttributes, Pair(10,10))
                 }
-                "button"    -> {
+                "button" -> {
                     // ignore background and color because they aren't a modifier
-                    var ignoreAttributes : ArrayList<String> = arrayListOf()
-                    for (ii in 0 until childNodes.item(i).attributes.length) {
-                        var nodeName = childNodes.item(i).attributes.item(ii).nodeName
+                    var ignoreAttributes : ArrayList<String> = arrayListOf("background", "color")
 
-                        if (nodeName in arrayOf("background", "color"))
-                            ignoreAttributes.add(nodeName)
-                    }
+                    val (modifier, otherAttributes) = getModifier(
+                        attributes = childNodes.item(i).attributes,
+                        ignoreAttributes = ignoreAttributes,
+                        layoutTreeNode = layoutTreeNode,
+                        childID = childID
+                    )
 
-                    val (modifier, otherAttributes) = getModifier(childNodes.item(i).attributes, ignoreAttributes, appendPos)
-
-                    // add id
+                    // add onClick key
                     if ("onClick" in otherAttributes.keys){
-                        addID(otherAttributes["onClick"]!!.toString().replace("\$", ""), "off", appendPos)
+                        addID(
+                            key = otherAttributes["onClick"]!!.toString().replace("\$", ""),
+                            value = "off",
+                            layoutTreeNode = layoutTreeNode
+                        )
                     }
 
-                    // text id
-                    /*val text = */childNodes.item(i).textContent.replace(
+                    // add text key
+                    childNodes.item(i).textContent.replace(
                         regexText()
                     ){
                         // id
-                        addID(it.groupValues[1], it.groupValues[2], appendPos)
+                        addID(
+                            key = it.groupValues[1],
+                            value = it.groupValues[2],
+                            layoutTreeNode = layoutTreeNode
+                        )
 
                         // default text
                         if (it.groupValues[1].isNotEmpty()) {
-                            "" + getID(it.groupValues[1])
+                            "" + layoutTreeNode.get(it.groupValues[1])
                         } else {
                             it.groupValues[2]
                         }
@@ -378,25 +358,30 @@ class DesktopComposeLayout {
                         },
                         colors = ButtonConstants.defaultButtonColors(
                             backgroundColor = if ("background" in otherAttributes.keys) getColorByHex(otherAttributes["background"]!!) else MaterialTheme.colors.primary,
-                            contentColor = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else contentColorFor(MaterialTheme.colors.primary)
+                            contentColor = if ("color" in otherAttributes.keys) getColorByHex(otherAttributes["color"]!!) else contentColorFor(
+                                MaterialTheme.colors.primary)
                         )
-                    ){
-                        checkXMLChilds(childNodes.item(i), appendPos = appendPos)
+                    ) {
+                        checkXMLChild(childNodes.item(i), layoutTreeNode, childID)
                     }
 
                     // add margin
-                    if ("margin" in  otherAttributes.keys) {
-                        var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
-
-                        Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
-                    } else {
-                        Spacer(modifier = Modifier.width(10.dp).height(10.dp))
-                    }
+                    addMargin(otherAttributes, Pair(10,10))
                 }
             }
         }
+    }
 
-        return
+    // add margin on layout
+    @Composable
+    fun addMargin(otherAttributes : HashMap<String, String>, default : Pair<Int, Int> = Pair(0, 0)) {
+        if ("margin" in  otherAttributes.keys) {
+            var marginAux = otherAttributes["margin"]!!.split(",").map { it.toInt() }
+
+            Spacer(modifier = Modifier.width(marginAux.first().dp).height(marginAux.last().dp))
+        } else {
+            Spacer(modifier = Modifier.width(default.first.dp).height(default.second.dp))
+        }
     }
 
     /*********************************************************************************************************/
@@ -404,7 +389,8 @@ class DesktopComposeLayout {
     private fun getModifier(
         attributes : NamedNodeMap,
         ignoreAttributes : ArrayList<String> = arrayListOf(),
-        appendPos : Int
+        layoutTreeNode : LayoutTree<String>,
+        childID : Int?
     ) : Pair<Modifier, HashMap<String, String>> {
         var modifier = Modifier.defaultMinSizeConstraints()
         var otherAttributes = HashMap<String, String>()
@@ -440,13 +426,18 @@ class DesktopComposeLayout {
              * */
             for (i in attributeOrder) {
                 var nodeName = attributes.item(i).nodeName
-                var nodeID = ""
+                var nodeKey = ""
+                //println("HHHHHHHHH: |$nodeName|$nodeKey|${attributes.item(i).nodeValue}|")
                 var nodeValue = attributes.item(i).nodeValue.toString().replace(
                     regexAttribute()
                 ){
                     // nodeID
-                    addID(it.groupValues[1], it.groupValues[2], appendPos)
-                    nodeID = it.groupValues[1]
+                    addID(
+                        key = it.groupValues[1],
+                        value = it.groupValues[2],
+                        layoutTreeNode = layoutTreeNode
+                    )
+                    nodeKey = it.groupValues[1]
 
                     // nodeValue
                     it.groupValues[2]
@@ -454,20 +445,24 @@ class DesktopComposeLayout {
 
                 // ignore attribute
                 if (nodeName in ignoreAttributes) {
-                    //if (nodeID in ID.keys) {
-                    if (nodeID in ID.keys) {
-                        otherAttributes[nodeName] = getID(nodeID)
+                    //if (ID.has(nodeKey)) {
+                    if (layoutTreeNode.has(nodeKey)) {
+                        //otherAttributes[nodeName] = ID.get(nodeKey)!!
+                        otherAttributes[nodeName] = layoutTreeNode.get(nodeKey)!!
                     } else {
                         otherAttributes[nodeName] = nodeValue
                     }
+
                     continue
                 }
 
                 when (nodeName) {
                     "background" -> {
-                        modifier = if (nodeID in ID.keys) {
+                        //modifier = if (layoutTreeNode.has(nodeKey)) {
+                        modifier = if (layoutTreeNode.has(nodeKey)) {
                             modifier.background(
-                                getColorByHex(getID(nodeID))
+                                //getColorByHex(ID.get(nodeKey)!!)
+                                getColorByHex(layoutTreeNode.get(nodeKey)!!)
                             )
                         } else {
                             modifier.background(

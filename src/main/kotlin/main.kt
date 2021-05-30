@@ -20,52 +20,95 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import java.util.function.BiConsumer
 
 fun main() {
-    var mainLayout = DesktopComposeLayout()
+    var layout = DesktopLayout()
 
     Window (
         title = "layout-desktop-compose"
     ){
-        mainLayout.getLayout("example1.xml", onButtonClick = {
-            // list all ids
-            //mainLayout.ID.forEach { (key, value) -> println("$key = ${value.value}")}
+        layout.getLayout("example1.xml") {
 
-            // button 1
-            mainLayout.buttonClicked("button1") {
-                mainLayout.ID["ip"]?.value = "127.0.0.1"
+            /*************************************************************************************************/
 
-                if (mainLayout.ID["btnText1"]?.value == "CONNECT") {
-                    mainLayout.ID["connectionCircle"]?.value = "#32FF32"
-                    mainLayout.ID["btnText1"]?.value = "DISCONNECT"
+            /** button 1 */
+            layout.buttonClicked("button1") {
+                println(">> button1:")
 
-                    mainLayout.ID["btn1Background"]?.value = "#a63603"
+                if (layout.get("btnText1") == "CONNECT") {
+                    layout.set("ip", "127.0.0.1")
+                    layout.set("connectionCircle", "#32FF32")
+
+                    layout.set("btnText1", "DISCONNECT")
+                    layout.set("btn1Background", "#a63603")
                 } else {
-                    mainLayout.ID["connectionCircle"]?.value = "#FF3232"
-                    mainLayout.ID["btnText1"]?.value = "CONNECT"
+                    layout.set("ip", "")
+                    layout.set("connectionCircle", "#FF3232")
 
-                    mainLayout.ID["btn1Background"]?.value = "#f16913"
+                    layout.set("btnText1", "CONNECT")
+                    layout.set("btn1Background", "#f16913")
                 }
+
+                // test
+                layout.tree()
             }
 
-            // button 2
-            mainLayout.buttonClicked("button2") {
-                mainLayout.ID["btnText2"]?.value += "A"
+            /*************************************************************************************************/
 
-                mainLayout.ID["contentBlock"]?.value = "logContent.xml"
+            /** button 2 */
+            layout.buttonClicked("button2") {
+                println(">> button2:")
+
+                layout.set("btnText2", "on")
+
+                layout.set("btnText3", "off")
+
+                layout.set("contentBlock", "logContent.xml")
             }
 
-            // button 3
-            mainLayout.buttonClicked("button3") {
-                mainLayout.ID["btnText3"]?.value += "B"
+            /*************************************************************************************************/
 
-                mainLayout.ID["contentBlock"]?.value = ""
+            /** button 3 */
+            layout.buttonClicked("button3") {
+                println(">> button3:")
+
+                layout.set("btnText2", "off")
+
+                layout.set("btnText3", "on")
+
+                layout.set("contentBlock", "")
             }
 
-            // log refresh button
-            mainLayout.buttonClicked("logRefreshButton") {
-                mainLayout.ID["logItems"]?.value = "logItem.xml"
+            /*************************************************************************************************/
+
+            // add log button
+            layout.buttonClicked("addButton") {
+                println(">> addButton:")
+
+                //layout.set("logItems", "logItem.xml")
+                layout.append("logItems", "logItem.xml")
+
+                layout.set("itemText", "WWWWWWW", 0)
             }
-        })
+
+            /*************************************************************************************************/
+
+            /*
+            // remove last log button
+            layout.buttonClicked("removeButton") {
+                layout.removeIDItem("logItems", layout.getIDList("logItems").last())
+
+                // print test
+                println(layout.getIDList("logItems"))
+                layout.ID["logItems"]!!.forEach { (key, value) -> println("$key = ${value.value}")}
+            }
+
+            // clear log button
+            layout.buttonClicked("clearButton") {
+                layout.clearIDItems("logItems")
+            }
+            * */
+        }
     }
 }
